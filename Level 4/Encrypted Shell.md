@@ -16,3 +16,5 @@ The next interaction we expect is when the user provides the input that will enc
  96 long. 
  
  A quick test reveals that encrypting "Invalid password!\n" with the method outlined in the shell file yields a hex string 96 long. SO that must be it.
+ 
+ Also, A is printed by the service but serves no real other purpose. That leads me to think that it is the key to this whole thing. We need the small exponent a, the correct one, in order to be able to decrypt whatever was sent.

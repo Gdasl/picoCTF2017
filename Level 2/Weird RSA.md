@@ -1,3 +1,4 @@
+# Weird RSA
 This one is a doozie. Shouldn't be since it's only 90 points so it should be easy.
 We have c, p, q, dp and dq. A quick verification tells us that p and q are both primes. We don't have e. Assuming that e is 65537 get us nowhere.
 

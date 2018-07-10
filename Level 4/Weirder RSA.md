@@ -16,7 +16,7 @@ If p is a prime number, then for any integer a, the number ap − a is an intege
 
 re⋅dP=rmodp
 
-So if we take an arbitrary number r and we compute r^e*dp - r mod n, this number should be a multiple of p and as such have p as a common factor with n (since n=p*q).
+So if we take an arbitrary number r and we compute $r^e*dp - r mod n$, this number should be a multiple of p and as such have p as a common factor with n (since n=p*q).
 
 Now from a helpful KhanAcademy Site [link], we know that:
 (A + B) mod C = (A mod C + B mod C) mod C

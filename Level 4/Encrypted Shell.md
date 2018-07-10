@@ -24,6 +24,7 @@ As it turns out, that was right. What I was missing was the correct PC and algor
 
 ```python
 def baby_steps_giant_steps(a,b,p,N = None):
+    if not N: N = p
     N = 1 + int(math.sqrt(N))
  
     #initialize baby_steps table

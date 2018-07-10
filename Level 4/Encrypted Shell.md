@@ -56,4 +56,7 @@ output1: 'Does this shell work?\n'
 input3:  'exit'
 output2:  ''
 ```
+So all we need is to send the encrypted passcode (input1) to the service.
 
+##The setback
+Until now, I solved all the challenges apart from the soRandom one "offline" as in I would just input the solution in the end. I realized too late that a has to basically be bruteforced in real time in order to correctly encrypt the password and send it to the service (since a changes everytime you call it....). That took me a little while especially since I botched the keyz challenge and was never able to put my private key and thus access the shell from outside the challenge grounds. I ended up expanding my script to encrypt and decrypt the input in real time and copied pasted back and forth... Not glorious but in the end, after 6 hours, o.w. 5 trying to run an algo on the wrong machine, I finally got the flag.

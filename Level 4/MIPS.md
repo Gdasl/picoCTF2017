@@ -36,13 +36,13 @@ $L3: #this is a loop
   beq     $5,$0,$L2         ;if $a1 = 0: goto L2
   addiu   $2,$2,1           ;increase $v0 by 1
   b       $L3               ;restart L3
-  addiu   $3,$3,-13         ;decrease $v1 by 13  --> shouldn't ever be happening  => 13*13 = 169 so $v1 = $v1-169
+  addiu   $3,$3,-13         ;decrease $v1 by 13  --> branch delay?  => 13*13 = 169 so $v1 = $v1-169
   
 $L2:
   addiu   $3,$3,-6          ;decrease $v1 by 6 --> $v1 = $v1 - 169 - 6
   sll     $5,$3,24          ;$a1 = $v1*(2^24)
   sra     $16,$16,16        ;shift $s0 by 0x10
-  addiu   $2,$16,-81        ;decrease $s0 by 81 and put result in $v0 
+  addiu   $2,$16,-81        ;decrease $s0 by 81 and put result in $v0 --> $s0 is now 
   sll     $8,$2,6           ;$t0 = $v0*(2^6)
   sll     $3,$2,8           ;$v1 = $v0*(2^8)
   subu    $3,$3,$8          ;substract $t0 from $v1 and put result in $v1
@@ -59,13 +59,13 @@ $loader_fct:
   li      $2,165            ;load 0xa5 into $v0
   
 $final_eval:
-  addiu   $2,$2,-94         ;$v0 = $v0 - 94
-  sll     $2,$2,8           ;$v0 = $v0 * 2*8
+  addiu   $2,$2,-94         ;$v0 = $v0 - 94 --> either v0 is now 0 (a) or v0 = 71 (b)
+  sll     $2,$2,8           ;$v0 = $v0 * 2*8 --> 0 (a) or 0x4700 (b)
   srl     $6,$6,24          ;shift right $a2 by 0x18 // $a2 = $a2/(2^24)
   subu    $16,$6,$16        ;$s0 = $a2 - $s0
   subu    $4,$4,$16         ;$a0 = $a0 - s0
   addu    $3,$5,$3          ;$v1 = $a1 + $v1
-  addu    $3,$2,$3          ;$v1 = $v0 + $v1
+  addu    $3,$2,$3          ;$v1 = $v0 + $v1 --> (a) v1 = v1
   addu    $16,$4,$3         ;$s0 = $a0 + $v1
   bne     $16,$0,$L5        ;if $s0 != 0 jump to $fail_end
   li $v0, 4                 ;set $v0 to 4

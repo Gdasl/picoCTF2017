@@ -39,19 +39,27 @@ $L3: #this is a loop
   addiu   $3,$3,-13         ;decrease $v1 by 13  --> branch delay?  => 13*13 = 169 so $v1 = $v1-169
   
 $L2:
+  ;operations on B0
   addiu   $3,$3,-6          ;$v1 = $v1 - 6
   sll     $5,$3,24          ;$a1 = $v1*(2^24)
+  
+  ;operations on B1
   sra     $16,$16,16        ;shift $s0 by 0x10 --> restores to original byte1
   addiu   $2,$16,-81        ;decrease $s0 by 81 and put result in $v0
   sll     $8,$2,6           ;$t0 = $v0*(2^6)
   sll     $3,$2,8           ;$v1 = $v0*(2^8)
   subu    $3,$3,$8          ;$v1 = $v1 - t0
   subu    $3,$2,$3          ;$v1 = $v0 - $v1
+  
+  ;operations on B2
   sra     $7,$7,8           ;shift right $a3 by 8  --> restores to original byte3
   sll     $2,$4,1           ;$v0 = $a0*2 --> multiply last byte by 2
   addiu   $2,$2,3           ;v0 = v0 + 3
+  
+  ;comparison
   bne     $7,$2,$loader_fct ;if $a3 != $v0 jump to $loader_fct
-  sll     $3,$3,16          ;shift $v1 by 16
+  sll     $3,$3,16          ;shift $v1 by 16; happens either way
+  
   b       $final_eval       ;jump to final_eval
   li      $2,94
   
@@ -61,12 +69,12 @@ $loader_fct:
 $final_eval:
   addiu   $2,$2,-94         ;$v0 = $v0 - 94 --> either v0 is now 0 (a) or v0 = 71 (b)
   sll     $2,$2,8           ;$v0 = $v0 * 2*8 --> 0 (a) or 0x4700 (b)
-  srl     $6,$6,24          ;shift right $a2 by 0x18 // $a2 = $a2/(2^24)
-  subu    $16,$6,$16        ;$s0 = $a2 - $s0
-  subu    $4,$4,$16         ;$a0 = $a0 - s0
-  addu    $3,$5,$3          ;$v1 = $a1 + $v1
-  addu    $3,$2,$3          ;$v1 = $v0 + $v1 --> (a) v1 = v1
-  addu    $16,$4,$3         ;$s0 = $a0 + $v1
+  srl     $6,$6,24          ;restore B0
+  subu    $16,$6,$16        ;$s0 = B0-B1
+  subu    $4,$4,$16         ;$a0 = B3-B0+B1
+  addu    $3,$5,$3          ;$v1 = [16777216*B0 - 2936012800] + [1013907456 - 12517376*B1]
+  addu    $3,$2,$3          ;$v1 = [16777216*B0 - 2936012800] + [1013907456 - 12517376*B1] + const
+  addu    $16,$4,$3         ;$s0 = B3-B0+B1 + [16777216*B0 - 2936012800 + 1013907456 - 12517376*B1] + const]
   bne     $16,$0,$L5        ;if $s0 != 0 jump to $fail_end
   li $v0, 4                 ;set $v0 to 4
   la $a0, success           ;BIG SHAQ WIN
@@ -130,7 +138,12 @@ Shift left by 24
 ```
 sll     $5,$3,24
 ```
-
+Summary
+```
+$5 = [B0-175] << 24
+= B0*(2**24) - 175*(2**24)
+= 16777216*B0 - 2936012800
+```
 #### Byte 1
 Initiated
 ```
@@ -160,11 +173,21 @@ tmp0 - tmp3
 ```
 subu    $3,$2,$3
 ```
+Shift left by 16
+```
+sll     $3,$3,16
+```
+
 Summary:
 ```
-(B1-81) - [(B1-81) << 8 - (B1-81) << 6 ]
+$3 = [(B1-81) - [(B1-81) << 8 - (B1-81) << 6 ]] << 16
+= [(B1 - 81) - [(B1-81) * 192]] * 2^16
+= [(B1 - 81) * [1-192]]* 2^16
+= [-191B1 + 15741]*65536
+= 1013907456 - 12517376*B1
 ```
-#### Byte 3
+
+#### Byte 2
 Intiated
 ```
 andi    $7,$4,0xff00
@@ -173,8 +196,12 @@ Right shifted to restore original single byte
 ```
 sra     $7,$7,8
 ```
+Summary
+```
+$7 = B2
+```
 
-#### Byte 4
+#### Byte 3
 Initiated
 ```
 andi    $4,$4,0x00ff
@@ -187,5 +214,33 @@ Then incremented by 3
 ```
 addiu   $2,$2,3
 ```
+Summary
+```
+$2 = (B3*2) + 3
+```
 
 #### Byte interaction
+```
+bne     $7,$2,$loader_fct
+```
+Compares ```B2 and 3*B3+6```
+
+The function final_eval basically translates to:
+```
+B3-B0+B1 + 16777216*B0 - 2936012800 + 1013907456 - 12517376*B1 + const
+B3 + 16777215*B0 - 12517375*B1 - 1922105344 + const where const = 0 or const = 18176
+```
+So all we need is a simple program to solve that equation. The good thing is we know: each byte can be at most 0xff which is 255. Moreover, we know that the first byte interaction has to evaluate to equal. 
+So ```B2 == 2*B3 + 3``` and ```B2 < 255``` so B3 can be at most 126. We simply run the following:
+```python
+def calc(B3,B0,B1):
+    return B3 + 16777215*B0 - 12517375*B1 - 1922105344
+
+for j in range(126): #B3
+    for i in range(256): #B0
+        for k in range(256): #B1
+            if calc(j,i,k) == 0:
+                print hex((i << 24) + (k << 16) + (((j*2)+3) << 8) + j)
+ ```
+ which finally prints out the flag:
+ ```0xaf51bf5e```

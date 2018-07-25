@@ -1,7 +1,7 @@
 # MIPS
 
 ### Analyzing the code
-Here is the code somehow cleaned up and commented:
+Here is the code somehow cleaned up and commented (Note: I directly enhanced the comments as I progressed)  :
 
 ```asm
 .data
@@ -224,10 +224,12 @@ $2 = (B3*2) + 3
 bne     $7,$2,$loader_fct
 ```
 Compares ```B2 and 3*B3+6```
+And then there is the final function, the moderlode...
 
+### Solving the final function
 The function final_eval basically translates to:
 ```
-B3-B0+B1 + 16777216*B0 - 2936012800 + 1013907456 - 12517376*B1 + const
+B3-B0+B1 + 16777216*B0 - 2936012800 + 1013907456 - 12517376*B1 + const where const = 0 or const = 18176
 B3 + 16777215*B0 - 12517375*B1 - 1922105344 + const where const = 0 or const = 18176
 ```
 So all we need is a simple program to solve that equation. The good thing is we know: each byte can be at most 0xff which is 255. Moreover, we know that the first byte interaction has to evaluate to equal. 
@@ -244,3 +246,5 @@ for j in range(126): #B3
  ```
  which finally prints out the flag:
  ```0xaf51bf5e```
+
+This was a really fun challenge that took a while because I wanted to understand the code line by line and I hadn't dabbled in assembly in a while. I would definitely recommend it to a beginner willing to learn!
